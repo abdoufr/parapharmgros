@@ -1,6 +1,6 @@
 import { db, isFirebaseConfigured } from './config';
 import { 
-  collection, doc, getDocs, getDoc, setDoc, updateDoc, addDoc, deleteDoc, query, where 
+  collection, doc, getDocs, getDoc, setDoc, updateDoc, deleteDoc, query, where 
 } from 'firebase/firestore';
 import { INITIAL_VENDORS, INITIAL_PRODUCTS } from '../data/initialMockData';
 
@@ -84,7 +84,7 @@ export const createVendorInDB = async (vendorData) => {
     whatsapp: vendorData.whatsapp || '',
     wilaya: vendorData.wilaya || '16 - Alger',
     address: vendorData.address || '',
-    logo: vendorData.logo || 'https://images.unsplash.com/photo-1586015555751-63bb77f4322a?w=150&auto=format&fit=crop&q=80',
+    logo: vendorData.logo || '', // Default empty profile picture for new accounts
     bio: vendorData.bio || 'Grossiste de produits de parapharmacie.',
     status: vendorData.status || 'active',
     isDeleted: false,

@@ -9,7 +9,7 @@ import { sendPasswordResetAuth } from '../../firebase/authService';
 import { WILAYAS } from '../../data/initialMockData';
 import { 
   ShieldCheck, Users, UserPlus, Trash2, RotateCcw, KeyRound, 
-  Search, CheckCircle2, XCircle, AlertTriangle, Send, RefreshCw, Eye
+  Search, CheckCircle2, XCircle, AlertTriangle, Send, RefreshCw, Eye, Store
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -124,7 +124,7 @@ export default function AdminDashboard() {
     }
   };
 
-  // Admin Action: Create Vendor Manually
+  // Admin Action: Create Vendor Manually (Logo starts empty)
   const handleCreateVendor = async (e) => {
     e.preventDefault();
     if (!newVendorForm.name || !newVendorForm.email) {
@@ -141,6 +141,7 @@ export default function AdminDashboard() {
         whatsapp: newVendorForm.whatsapp || newVendorForm.phone,
         wilaya: newVendorForm.wilaya,
         address: newVendorForm.address,
+        logo: '', // empty photo by default
         status: 'active',
         isEmailVerified: true
       });
@@ -249,7 +250,7 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Tabs Navigation (Firebase button removed as requested) */}
+        {/* Tabs Navigation */}
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4 mb-8">
           <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
             <button
@@ -324,11 +325,17 @@ export default function AdminDashboard() {
                         <tr key={vendor.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
                           <td className="p-4">
                             <div className="flex items-center gap-3">
-                              <img
-                                src={vendor.logo}
-                                alt={vendor.name}
-                                className="w-10 h-10 rounded-xl object-cover border border-slate-200 dark:border-slate-700 shrink-0"
-                              />
+                              {vendor.logo ? (
+                                <img
+                                  src={vendor.logo}
+                                  alt={vendor.name}
+                                  className="w-10 h-10 rounded-xl object-cover border border-slate-200 dark:border-slate-700 shrink-0"
+                                />
+                              ) : (
+                                <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 shrink-0">
+                                  <Store className="w-5 h-5" />
+                                </div>
+                              )}
                               <div>
                                 <div className="font-bold text-slate-900 dark:text-white text-sm flex items-center gap-1">
                                   {vendor.name}
