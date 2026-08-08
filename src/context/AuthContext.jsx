@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { getCurrentAuthUser, logoutAuth } from '../firebase/authService';
+import { getCurrentAuthUser, logoutAuth, saveAuthSession } from '../firebase/authService';
 import { getVendorById } from '../firebase/firestoreService';
 
 const AuthContext = createContext(null);
@@ -22,6 +22,7 @@ export const AuthProvider = ({ children }) => {
         const fresh = await getVendorById(current.id);
         if (fresh && !fresh.isDeleted && fresh.status === 'active') {
           setUser(fresh);
+          saveAuthSession(fresh);
         } else {
           setUser(null);
         }
@@ -34,6 +35,7 @@ export const AuthProvider = ({ children }) => {
   const loginUser = (userData) => {
     setUser(userData);
     setIsAdmin(false);
+    saveAuthSession(userData);
     localStorage.removeItem('paragros_admin_session');
   };
 
@@ -51,7 +53,13 @@ export const AuthProvider = ({ children }) => {
   };
 
   const updateUserProfile = (updatedData) => {
-    setUser(prev => prev ? { ...prev, ...updatedData } : null);
+    setUser(prev => {
+      const updated = prev ? { ...prev, ...updatedData } : null;
+      if (updated) {
+        saveAuthSession(updated);
+      }
+      return updated;
+    });
   };
 
   return (

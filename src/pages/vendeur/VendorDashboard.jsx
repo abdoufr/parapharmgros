@@ -79,16 +79,22 @@ export default function VendorDashboard() {
     }
   }, [user]);
 
-  // Handle Logo Upload from Phone / Computer
+  // Handle Profile Logo Upload from Phone / Computer with INSTANT AUTO-SAVE
   const handleLogoFileUpload = async (e) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file || !user) return;
 
     setUploadingLogo(true);
     try {
       const processedDataUrl = await processImageFile(file, 800, 800, 0.85);
       setProfileForm(prev => ({ ...prev, logo: processedDataUrl }));
-      toast.success('Photo de profil chargée avec succès !');
+      
+      // Auto save to DB & Auth Context immediately
+      const updated = await updateVendorProfile(user.id, { logo: processedDataUrl });
+      if (updated) {
+        updateUserProfile(updated);
+        toast.success('Photo de profil mise à jour et enregistrée avec succès !');
+      }
     } catch (err) {
       toast.error('Erreur lors du traitement de la photo.');
     } finally {
@@ -183,8 +189,10 @@ export default function VendorDashboard() {
     e.preventDefault();
     try {
       const updated = await updateVendorProfile(user.id, profileForm);
-      updateUserProfile(updated);
-      toast.success('Profil de la boutique mis à jour avec succès !');
+      if (updated) {
+        updateUserProfile(updated);
+        toast.success('Profil de la boutique mis à jour avec succès !');
+      }
     } catch (err) {
       toast.error('Erreur lors de la mise à jour du profil.');
     }
