@@ -5,10 +5,11 @@ import { useLanguage } from '../../context/LanguageContext';
 import { 
   getVendorProducts, addProduct, updateProduct, deleteProduct, updateVendorProfile 
 } from '../../firebase/firestoreService';
+import { processImageFile } from '../../utils/imageUtils';
 import { CATEGORIES, WILAYAS } from '../../data/initialMockData';
 import { 
   Store, Package, PlusCircle, Edit3, Trash2, Eye, Save, X, 
-  ExternalLink, ShieldCheck, Camera
+  ExternalLink, ShieldCheck, Camera, Upload, Image as ImageIcon, Loader2
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -20,6 +21,8 @@ export default function VendorDashboard() {
   const [activeTab, setActiveTab] = useState('products'); // 'products' | 'profile'
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [uploadingProductImg, setUploadingProductImg] = useState(false);
 
   // Modal / Form state for Add or Edit Product
   const [editingProduct, setEditingProduct] = useState(null);
@@ -75,6 +78,40 @@ export default function VendorDashboard() {
       });
     }
   }, [user]);
+
+  // Handle Logo Upload from Phone / Computer
+  const handleLogoFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingLogo(true);
+    try {
+      const processedDataUrl = await processImageFile(file, 800, 800, 0.85);
+      setProfileForm(prev => ({ ...prev, logo: processedDataUrl }));
+      toast.success('Photo de profil chargée avec succès !');
+    } catch (err) {
+      toast.error('Erreur lors du traitement de la photo.');
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
+
+  // Handle Product Image Upload from Phone / Computer
+  const handleProductFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingProductImg(true);
+    try {
+      const processedDataUrl = await processImageFile(file, 1000, 1000, 0.85);
+      setProductForm(prev => ({ ...prev, image: processedDataUrl }));
+      toast.success('Image du produit chargée avec succès !');
+    } catch (err) {
+      toast.error('Erreur lors du traitement de l\'image.');
+    } finally {
+      setUploadingProductImg(false);
+    }
+  };
 
   const handleOpenAddProduct = () => {
     setEditingProduct({ isNew: true });
@@ -304,6 +341,54 @@ export default function VendorDashboard() {
             <h2 className="text-xl font-bold text-slate-900 dark:text-white">Modifier les informations de la boutique</h2>
             
             <form onSubmit={handleSaveProfile} className="space-y-4">
+              
+              {/* Profile Photo Uploader Section */}
+              <div className="bg-slate-50 dark:bg-slate-950 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
+                <label className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                  <Camera className="w-4 h-4 text-[#0d9488] dark:text-teal-400" />
+                  <span>Photo de Profil / Logo Boutique (Sans limite de taille)</span>
+                </label>
+
+                <div className="flex items-center gap-4">
+                  {profileForm.logo ? (
+                    <img
+                      src={profileForm.logo}
+                      alt="Logo preview"
+                      className="w-16 h-16 rounded-2xl object-cover border-2 border-teal-500/40 shadow-sm shrink-0"
+                    />
+                  ) : (
+                    <div className="w-16 h-16 rounded-2xl bg-teal-50 dark:bg-teal-950 border-2 border-teal-300 dark:border-teal-800 flex items-center justify-center text-[#0d9488] dark:text-teal-400 shrink-0">
+                      <Store className="w-8 h-8" />
+                    </div>
+                  )}
+
+                  <div className="flex-1 space-y-2">
+                    <label className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#0d9488] hover:bg-[#0f766e] text-white text-xs font-bold rounded-xl shadow-xs cursor-pointer transition-all">
+                      {uploadingLogo ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                      <span>Choisir une photo depuis votre appareil (Galerie / Téléphone)</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleLogoFileUpload}
+                        className="hidden"
+                      />
+                    </label>
+
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                      Ou collez un lien d'image direct ci-dessous :
+                    </div>
+
+                    <input
+                      type="url"
+                      placeholder="https://..."
+                      value={profileForm.logo}
+                      onChange={(e) => setProfileForm({ ...profileForm, logo: e.target.value })}
+                      className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white px-3 py-2 rounded-xl text-xs font-medium focus:outline-none focus:border-teal-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Nom de la boutique *</label>
@@ -371,24 +456,6 @@ export default function VendorDashboard() {
                   onChange={(e) => setProfileForm({ ...profileForm, address: e.target.value })}
                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white px-3 py-2.5 rounded-xl text-xs font-medium focus:outline-none focus:border-teal-500"
                 />
-              </div>
-
-              {/* Logo URL / Profile picture edit section */}
-              <div>
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1 flex items-center gap-1.5">
-                  <Camera className="w-4 h-4 text-[#0d9488] dark:text-teal-400" />
-                  <span>Photo de Profil / Logo Boutique (URL)</span>
-                </label>
-                <input
-                  type="url"
-                  placeholder="Collez le lien URL de votre logo/photo (ex: https://...)"
-                  value={profileForm.logo}
-                  onChange={(e) => setProfileForm({ ...profileForm, logo: e.target.value })}
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white px-3 py-2.5 rounded-xl text-xs font-medium focus:outline-none focus:border-teal-500"
-                />
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-                  Laissez vide si vous n'avez pas encore de photo de profil. Vous pouvez ajouter le lien de votre image ici à tout moment.
-                </p>
               </div>
 
               <div>
@@ -493,14 +560,43 @@ export default function VendorDashboard() {
                 </div>
               </div>
 
-              <div>
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">URL Image Produit</label>
-                <input
-                  type="url"
-                  value={productForm.image}
-                  onChange={(e) => setProductForm({ ...productForm, image: e.target.value })}
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white px-3 py-2 rounded-xl text-xs focus:outline-none focus:border-teal-500"
-                />
+              {/* Product Image Uploader Section */}
+              <div className="bg-slate-50 dark:bg-slate-950 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-2">
+                <label className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                  <ImageIcon className="w-4 h-4 text-[#0d9488] dark:text-teal-400" />
+                  <span>Image du produit (Télécharger depuis l'appareil)</span>
+                </label>
+
+                <div className="flex items-center gap-3">
+                  {productForm.image && (
+                    <img
+                      src={productForm.image}
+                      alt="Product preview"
+                      className="w-14 h-14 rounded-xl object-cover border border-slate-300 dark:border-slate-700 shrink-0"
+                    />
+                  )}
+
+                  <div className="flex-1 space-y-1.5">
+                    <label className="inline-flex items-center gap-2 px-3 py-2 bg-[#0d9488] hover:bg-[#0f766e] text-white text-xs font-bold rounded-xl shadow-xs cursor-pointer transition-all">
+                      {uploadingProductImg ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                      <span>Choisir une photo du produit</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleProductFileUpload}
+                        className="hidden"
+                      />
+                    </label>
+
+                    <input
+                      type="url"
+                      placeholder="Ou collez un lien URL d'image"
+                      value={productForm.image}
+                      onChange={(e) => setProductForm({ ...productForm, image: e.target.value })}
+                      className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white px-3 py-1.5 rounded-xl text-xs focus:outline-none focus:border-teal-500"
+                    />
+                  </div>
+                </div>
               </div>
 
               <div>
